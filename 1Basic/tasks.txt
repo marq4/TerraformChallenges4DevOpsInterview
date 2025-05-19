@@ -1,0 +1,10 @@
+Tasks: 
+1.- Create a logical resource of a pet with a random name and ouput the pet's name only. 
+2.- Manage a local file with specific content. 
+3.- Now manage a local file that contains the name of the pet. Receive the name of this new file interactively. 
+4.- Display the name of the pet without running plan or apply. 
+5.- Now make sure that the pet resource is created first by specifying the dependency explicitly. 
+6.- Now create 3 local files with names: dog, cat, duck .txt using count, the code should be able to handle 
+	more files in the future. 
+7.- Now do the same using for-each. 
+8.- Now make sure to use version 2.5.0 or greater of local provider. 

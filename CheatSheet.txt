@@ -1,0 +1,52 @@
+* Output a the id of a resource: 
+	+ output "resource-id" {
+		value = provider_type.name.id 
+	}
+	+ $ terraform output resource-id 
+
+* Manage a local file with specific content: 
+	+ resource "local_file" "my-file" {
+		filename = "/root/my-file.txt" 
+		content = "Important content." 
+	}
+
+* Write the value of a logical resource in a local file, get the name of the file interactively: 
+	+ variable "local-filename" {
+		type = string 
+	}
+	resource "local_file" "save-var-id" {
+		filename = var.local-filename 
+		content = random_pet.pet.id 
+	}
+	+ $ terraform apply 
+
+* Display value without running apply: 
+	+ $ terraform output save-var-id 
+
+* Specify a dependency explicitly: 
+	+ <RESOURCE BLOCK>{
+		depends_on = [provider_type.name, ...]
+	}
+
+* Manage multiple resources from a list of names: 
+	+ resource "local_file" "multiple-resources" {
+		for_each = toset(var.my-list)
+		filename = each.value
+		content = ""
+	}
+
+* Specify version of provider to be version or greater: 
+	+ terraform {
+		required_providers {
+			local = {
+				source = "hashicorp/local" 
+				version = ">= 2.5.0" 
+			}
+		}
+	}
+
+
+
+
+
+

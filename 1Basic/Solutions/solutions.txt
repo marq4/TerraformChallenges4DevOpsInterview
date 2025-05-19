@@ -1,0 +1,10 @@
+Solutions: 
+1: 1pet.tf, terraform fmt, validate, plan, apply. 
+2: 2file.tf. 
+3: 3vars.tf. 
+4: terraform output my-pet-name 
+5: 5dependson.tf: Using depends_on meta-argument that receives a list.  
+6: 6count.tf. 
+7: 7foreach.tf: We need to convert the list to a set. 
+8: 8terraform.tf. 
+
