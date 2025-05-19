@@ -45,8 +45,69 @@
 		}
 	}
 
+* Prevent deletion of a resource: 
+	+ lifecycle {
+		prevent_destroy = true
+	}
 
 
+_ AWS_ 
 
+* Create a new user: 
+	+ resource "aws_iam_user" "admin-user" {
+		name = "admin-user"
+		tags = {
+			Description = "#TODO"
+		}
+	}
 
+* Create a new policy with admin access: 
+	+ resource "aws_iam_policy" "admin" {
+		name = "Admin"
+		policy = file(admin.json)
+	}
+	+ 
+	{
+		"Version": "2012-10-17",
+		"Statement": [
+			"Effect": "Allow",
+			"Action": "*",
+			"Resource": "*"
+		]
+	}
 
+* Attach policy to user: 
+	+ resource "aws_iam_user_policy_attachment" "admin-access" {
+		user = aws_iam_user.admin-user.name
+		policy_arn = aws_iam_policy.admin.arn
+	}
+
+* Create a group: 
+	+ resource "aws_iam_group" "admins" {
+		name = "admins"
+	}
+
+* Make user part of a group: 
+	+ resource "aws_iam_group_membership" "admins-team" {
+		name = "admins-team"
+		group = aws_iam_group.admins.name
+		users = [aws_iam_user.admin.name]
+	}
+
+* Create a bucket that contains an image: 
+	+ resource "aws_s3_bucket" "static-content-bucket" {
+		bucket = <UNIQUE_BUCKET_NAME>
+	}
+	+ resource "aws_s3_object" "image" {
+		content = "image.png"
+		key = "image.png"
+		bucket = aws_s3_bucket.static-content-bucket.id
+	}
+
+* Allow bucket versioning: 
+	+ resource "aws_s3_versioning" "versioning" {
+		bucket = aws_s3_bucket.<BUCKET-NAME>.id 
+		versioning_configuration {
+			status = "Enabled"
+		}
+	}

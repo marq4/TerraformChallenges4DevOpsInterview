@@ -1,0 +1,8 @@
+Tasks: 
+1.- Create a user, an admin policy, and attach them. 
+2.- Create another user called s3-admin. 
+3.- Create a group called s3-admins. 
+4.- Group s3-admins shall be able to perform any action on S3. 
+5.- User s3-admin must be a member of the group. 
+6.- Create a bucket that contains an image. 
+7.- Prevent deletion of the bucket and objects (prevent_destroy + versioning. Do not attempt MFA_delete). 
