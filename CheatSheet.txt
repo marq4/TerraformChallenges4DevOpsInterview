@@ -22,6 +22,8 @@
 
 * Display value without running apply: 
 	+ $ terraform output save-var-id 
+	+ $ terraform state show <EXISTING_RESOURCE> 
+	+ $ terraform plan 				# Displays outputs. 
 
 * Specify a dependency explicitly: 
 	+ <RESOURCE BLOCK>{
@@ -50,8 +52,13 @@
 		prevent_destroy = true
 	}
 
+* Remove/destroy a specific resource: 
+	+ $ terraform destroy -target <RESOURCE> 
+
 
 _ AWS_ 
+
+_ IAM _ 
 
 * Create a new user: 
 	+ resource "aws_iam_user" "admin-user" {
@@ -94,6 +101,9 @@ _ AWS_
 		users = [aws_iam_user.admin.name]
 	}
 
+
+_ S3 _
+
 * Create a bucket that contains an image: 
 	+ resource "aws_s3_bucket" "static-content-bucket" {
 		bucket = <UNIQUE_BUCKET_NAME>
@@ -111,3 +121,42 @@ _ AWS_
 			status = "Enabled"
 		}
 	}
+
+
+_ EC2 _ 
+
+* Create a new instance: 
+	+ resource "aws_instance" "my-server" {
+		ami = "ami-04f167a56786e4b09" 	# Linux, us-east-2. 
+		instance_type = "t2.micro"
+	}
+
+* Get latest AMI: 
+	+ data "aws_ami" "get-ami" { most_recent = true }	;;; output "ami" { value = data.aws_ami.get-ami } 
+	+ Now filter by: owed by Amazon, Ubuntu, 64 bits, hvm: 
+		data "aws_ami" "ubuntu" {
+			most_recent = true
+			owners = ["amazon"]
+			filter {
+				name = "name"
+				values = ["ubuntu*gp3*"]
+			}
+			filter {
+				name = "virtualization-type"
+				values = ["hvm"]
+			}
+			filter {
+				name = "architecture"
+				values = ["x86_64"]
+			}
+		}
+	+ ami = data.aws_ami.ubuntu.id 
+
+* Specify subnet to deploy to: 
+	+ subnet_id = <SUBNET-ID> 
+
+
+_ VPC _
+
+* Import an existing VPC into Terraform: 
+	+ $ terraform import aws_vpc.my-vpc <VPC-ID> 

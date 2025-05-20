@@ -6,3 +6,6 @@ Tasks:
 5.- User s3-admin must be a member of the group. 
 6.- Create a bucket that contains an image. 
 7.- Prevent deletion of the bucket and objects (prevent_destroy + versioning. Do not attempt MFA_delete). 
+8.- Create a new EC2 instance. 
+9.- Now create another one with the latest Ubuntu Linux AMI from our region, get value via Terraform. 
+10.- Terminate only the 2 EC2 instances, one by one, via Terraform. 

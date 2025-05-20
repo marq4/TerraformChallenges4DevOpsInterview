@@ -1,0 +1,6 @@
+terraform state list
+
+terraform destroy -target aws_instance.hardcoded-ami
+
+
+terraform destroy -target aws_instance.my-ubuntu-server
