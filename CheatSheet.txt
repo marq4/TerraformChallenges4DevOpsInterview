@@ -56,6 +56,8 @@
 	+ $ terraform destroy -target <RESOURCE> 
 
 
+
+
 _ AWS_ 
 
 _ IAM _ 
@@ -115,7 +117,7 @@ _ S3 _
 	}
 
 * Allow bucket versioning: 
-	+ resource "aws_s3_versioning" "versioning" {
+	+ resource "aws_s3_bucket_versioning" "versioning" {
 		bucket = aws_s3_bucket.<BUCKET-NAME>.id 
 		versioning_configuration {
 			status = "Enabled"
@@ -160,3 +162,34 @@ _ VPC _
 
 * Import an existing VPC into Terraform: 
 	+ $ terraform import aws_vpc.my-vpc <VPC-ID> 
+
+
+
+_ AWS Modules _ 
+
+// Use a module from the Terraform Registry: 
+
+* Security Group for SSH (VPC):
+	+ module "my-SG-ssh" {
+		source = "terraform-aws-modules/security-groups/aws/modules/ssh"
+		version = "3.16.0" # Better to specify to prevent problems. 
+		vpc_id = "vpc-123"
+		ingress_cidr_blocks = ["10.10.0.0/16"]
+		name = "ssh-access" 
+	}
+	+ terraform get 
+
+* Security Group for SSH access into an EC2 instance: 
+	+ module %%%
+
+* Create AIM user (+%%%): 
+	+ module "user" {
+		source = "terraform-aws-modules/iam/aws/modules/iam-user"
+		version = "5.28.0"
+		name = "<USER_NAME>"
+	}
+
+
+
+
+

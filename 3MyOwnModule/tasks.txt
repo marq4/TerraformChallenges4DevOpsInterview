@@ -1,0 +1,4 @@
+Tasks: 
+1.- Create a module of an EC2 instance (app server) and an S3 bucket with a mission-critial image. Use default VPC. 
+	+ Configurable params: region, AMI. 
+2.- Now deploy the infra using the module on a different region than your usual one. 
