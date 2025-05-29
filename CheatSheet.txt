@@ -1,3 +1,19 @@
+* What is Terraform: 
+	+ Infra as Code tool to define and provision infra using a high-level configuration language. 
+
+* Benefits of IaC:
+	+ Automation: of the deployment of infra, reducing manual work and errors. 
+	+ Consistency: of the environments, eliminating the "it works on my laptop" problem. 
+	+ Version Control: for tracking changes, rolling back, and team collaboration. 
+
+* How do you setup remote state to S3: 
+	1.- Create the bucket with Terraform. 
+	2.- Define backend block under terraform block (variables can't be used). 
+	3.- Do init again and Terraform asks if I want to move the state file to S3 bucket. 
+
+
+
+
 * Output a the id of a resource: 
 	+ output "resource-id" {
 		value = provider_type.name.id 
@@ -59,6 +75,44 @@
 
 
 _ AWS_ 
+
+* Configure S3 Backend: 
+	1.- Bucket has to exist already, if created with Terraform, local tfstate will be automatically copied over. 
+	2.- terraform {
+		backend "s3" {
+			bucket = "My-Terraform-State-Bucket-29872873874384"
+			key = "state"
+			region = "us-east-1"
+		}
+	}
+	3.- terraform init 
+	// Note: variables can't be used here!!!
+
+_ RDS _
+
+* DB: 
+	+ resource "aws_db_instance" "db" {
+		allocated_storage 		= 20				# Bibibytes. 
+		engine 			= "mysql"
+		instance_class		= "db.t3.micro"
+		username 		= "admin"
+	}
+
+
+_ Secrets Manager _
+
+* Store DB password: 
+	1.- Create the secret using CLI: 	$ ' ' aws secretsmanager create-secret --name my-database-password --secret-string YourSecurePassword 
+	2.- data "aws_secretsmanager_secret" "secrets" {
+		name = "my-database-password"
+	}
+	3.- data "aws_secretsmanager_secret_version" "latest" {
+		secret_id = data.aws_secretsmanager_secret.secrets.id
+	}
+	4.- resource "aws_db_instance" "my-db" {
+		password = data.aws_secretsmanager_sercret_version.latest.secret_string
+	}
+
 
 _ IAM _ 
 
@@ -180,7 +234,16 @@ _ AWS Modules _
 	+ terraform get 
 
 * Security Group for SSH access into an EC2 instance: 
-	+ module %%%
+	+ %%%
+
+* Security Group for web server EC2 instance: 
+	+ module "web-server-sg" {
+		source = "terraform-aws-modules/security-group/aws//modules/http-80"
+		name = "web-server"
+		description = "Security group for web-server with HTTP ports open within VPC. "
+		vpc_id = var.vpc-id
+		ingress_cidr_blocks = ["10.10.0.0/16"]
+	}
 
 * Create AIM user (+%%%): 
 	+ module "user" {
@@ -189,7 +252,144 @@ _ AWS Modules _
 		name = "<USER_NAME>"
 	}
 
+* VPC: 
+	+ module "vpc" {
+		source 		= "terraform-aws-modules/vpc/aws"
+		cidr 		= "10.0.0.0/16"
+		azs             	= ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+		private_subnets 	= ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+		public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+		tags = {
+			Environment: "DEV"
+		}
+	}
 
+* IAM Account: 
+	+ module "iam-account" {
+		source  			= "terraform-aws-modules/iam/aws//modules/iam-account"
+		account_alias 		= "awesome-company"
+		minimum_password_length 	= 16
+		require_numbers         	= false
+	}
 
+* Elastic Kubernetes (EKS) cluster and associated resources: 
+	+ module "eks" {
+		source 				= "terraform-aws-modules/eks/aws"
+		version 				= "~> 18.0"
+		cluster_name 			= "my-eks-cluster"
+		cluster_version 			= "1.22"
+		cluster_endpoint_private_access 	= true
+		cluster_endpoint_public_access 	= true
+		cluster_addons = {
+			coredns = {
+				resolve_conflicts = "OVERWRITE"
+			}
+			kube-proxy = {}
+			vpc-cni = {
+				resolve_conflicts = "OVERWRITE"
+			}
+		}
+		cluster_encryption_config = [{
+			provider_key_arn = "arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+			resources = ["secrets"]
+		}]
+		vpc_id = var.vpc-id
+		subnet_ids = ["subnet-abcde012", "subnet-bcde012a", "subnet-fghi345a"]
+		# Self Managed Node Group(s): 
+		self_managed_node_group_defaults = {
+			instance_type = "m6i.large"
+			update_launch_template_default_version = true
+			iam_role_additional_policies = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
+		}
+		self_managed_node_groups = {
+			one = {
+				name 		= "mixed-1"
+				max_size 		= 5
+				desired_size 	= 2
+				use_mixed_instances_policy = true
+				mixed_instances_policy = {
+					instances_distribution = {
+						on_demand_base_capacity = 0
+						on_demand_percentage_above_base_capacity = 10
+						spot_allocation_strategy = "capacity-optimized"
+					}
+					override = [
+						{instance_type = "m5.large"
+						weighted_capacity = "1"},
+						{instance_type     = "m6i.large"
+						weighted_capacity = "2"},
+					]
+				}
+			}
+		}
+		# EKS Managed Node Group(s):
+		eks_managed_node_group_defaults = {
+			disk_size = 50
+			instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+		}
+		eks_managed_node_groups = {
+			blue = {}
+			green = {
+				min_size 		= 1
+				max_size 		= 10
+				desired_size 	= 1
+				instance_types 	= ["t3.large"]
+				capacity_type 	= "SPOT"
+			}
+		}
+		# Fargate Profile(s): 
+		fargate_profiles = {
+			default = {
+				name 	= "default"
+				selectors 	= [{namespace = "default"}]
+			}
+		}
+		# aws-auth configmap:
+		manage_aws_auth_configmap = true
+		aws_auth_roles = [{
+			rolearn 		= "arn:aws:iam::66666666666:role/role1"
+			username 	= "role1"
+			groups 		= ["system:masters"]
+		}]
+		aws_auth_users = [
+			{userarn 		= "arn:aws:iam::66666666666:user/user1"
+			username 	= "user1"
+			groups 		= ["system:masters"]}
+		]
+		aws_auth_accounts = ["7777777777", "99999999"]
+		tags = {
+			Environment 	= "DEV"
+			Terraform 	= "true"
+		}
+	}
 
+* Lambda to store packages locally: 
+	+ module "lambda-func" {
+		source 			= "terraform-aws-modules/lambda/aws"
+		function_name 		= "my-lambda1"
+		description 		= "My awesome Lambda function. "
+		handler 		 	= "index.lambda_handler"
+		runtime 			= "python3.8"
+		source_path		= "../src/lambda-function1.py"
+		tags = {
+			Name = "my-lambda1"
+		}
+	}
 
+* RDS: 
+	+ module "my-db" {
+		source 					= "terraform-aws-modules/rds/aws"
+		identifier 					= "demo-db"
+		engine					= "mysql"
+		engine_version 				= "5.7.25"
+		instance_class				= "db.t3a.large"
+		allocated_storage				= 5
+		db_name					= "demo-db"
+		username 				= "user"
+		port					= "3306"
+		iam_database_authentication_enabled 		= true
+		vpc_security_group_ids			= ["sg-12345"]
+		maintenance_window			= "Sun:00:00-Sun:03:00"
+		backup_window				= "03:00-06:00"
+		deletion_protection 			= true
+	}

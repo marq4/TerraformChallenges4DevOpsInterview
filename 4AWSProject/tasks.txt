@@ -1,0 +1,4 @@
+Tasks: 
+1.- Create a new bucket and use it for remote state. 
+2.- Create a new secret: database password (CLI). 
+3.- Create an RDS intance and get the password from Secrets Manager. Properties: mysql, 20GiB, t3 micro. 
